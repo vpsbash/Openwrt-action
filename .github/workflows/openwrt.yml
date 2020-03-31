@@ -6,8 +6,8 @@ on:
   push:
     branches: 
       - master
-  schedule:
-    - cron: 0 0,6,12,18 * * *
+  #schedule:
+  #  - cron: 0 0,6,12,18 * * *
 
 env:
   CONFIG_FILE: seed.config
