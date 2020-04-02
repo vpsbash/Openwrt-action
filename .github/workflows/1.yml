@@ -1,0 +1,265 @@
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+        with:
+          ref: master
+
+      - name: 1
+        run: |
+          sudo apt-get install qemu-user-static
+          sudo apt install debootstrap debian-keyring
+          sudo debootstrap --foreign --no-check-gpg --arch=arm64 buster ./rootfs http://ftp.us.debian.org/debian
+          sudo cp /usr/bin/qemu-aarch64-static ./rootfs/usr/bin
+          LC_ALL=C LANGUAGE=C LANG=C chroot rootfs /debootstrap/debootstrap --second-stage
+          LC_ALL=C LANGUAGE=C LANG=C chroot rootfs dpkg --configure -a
+          LC_ALL=C LANGUAGE=C LANG=C chroot rootfs apt-get install -y sudo ssh net-tools ethtool wireless-tools network-manager iputils-ping rsyslog alsa-utils bash-completion gnupg busybox kmod htop--no-install-recommends
+          cat <<EOF | chroot rootfs adduser pi && addgroup pi adm && addgroup pi sudo && addgroup pi audio
+          raspberry
+          raspberry
+          pi
+          0
+          0
+          0
+          0          
+          y
+          EOF
+          LC_ALL=C LANGUAGE=C LANG=C chroot rootfs dpkg --add-architecture armhf
+          LC_ALL=C LANGUAGE=C LANG=C chroot rootfs apt-get install libc6:armhf
+          chroot rootfs apt clean
+          rm rootfs/usr/bin/qemu-aarch64-static
+          echo '127.0.0.1	raspberrypi' >> rootfs/etc/hosts
+          cat /dev/null > rootfs/etc/hostname
+          echo 'raspberrypi' >> rootfs/etc/hostname
+          echo "pi	ALL=(ALL)	ALL" >> rootf/etc/sudoers
+
+
+
+          cat /dev/null > rootfs/etc/fstab
+          cat <<EOF >> rootfs/etc/fstab
+          proc            /proc           proc    defaults          0       0
+          /dev/mmcblk0p2  /boot           ext4    defaults          0       0
+          /dev/mmcblk0p1  /boot/efi       vfat    defaults          0       2
+          /dev/mmcblk0p3  /               f2fs    defaults,noatime  0       1
+          # a swapfile is not a swap partition, no line here
+          #   use  dphys-swapfile swap[on|off]  for that
+          tmpfs /tmp tmpfs defaults,noatime,nosuid,size=100m 0 0
+          tmpfs /var/tmp tmpfs defaults,noatime,nosuid,size=30m 0 0
+          tmpfs /var/log tmpfs defaults,noatime,nosuid,mode=0755,size=100m 0 0
+          tmpfs /var/run tmpfs defaults,noatime,nosuid,mode=0755,size=2m 0 0
+          tmpfs /var/spool/mqueue tmpfs defaults,noatime,nosuid,mode=0700,gid=12,size=30m 0 0
+          EOF
+          mkdir root
+          cd root
+          sudo apt-get install f2fs-tools
+          git clone --depth=1 -b rpi-4.19.y https://github.com/raspberrypi/linux
+          sudo apt-get install -y bc build-essential gcc-aarch64-linux-gnu flex libncurses5-dev bison
+          cd linux
+          make ARCH=arm64 bcmrpi3_defconfig
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j1
+          cd ..
+          git clone --depth=1 -b master https://github.com/raspberrypi/firmware
+          mv firmware/boot . && rm -rf firmware
+          rm boot/*dtb && rm boot/kernel*
+          cp linux/arch/arm64/boot/Image boot/kernel8.img
+          cp linux/arch/arm64/boot/dts/broadcom/*dtb boot
+
+          cat <<EOF >> boot/config.txt
+          # For more options and information see
+          # http://rpf.io/configtxt
+          # Some settings may impact device functionality. See link above for details
+
+          # uncomment if you get no picture on HDMI for a default "safe" mode
+          #hdmi_safe=1
+
+          # uncomment this if your display has a black border of unused pixels visible
+          # and your display can output without overscan
+          #disable_overscan=1
+
+          # uncomment the following to adjust overscan. Use positive numbers if console
+          # goes off screen, and negative if there is too much border
+          #overscan_left=16
+          #overscan_right=16
+          #overscan_top=16
+          #overscan_bottom=16
+
+          # uncomment to force a console size. By default it will be display's size minus
+          # overscan.
+          #framebuffer_width=1280
+          #framebuffer_height=720
+
+          # uncomment if hdmi display is not detected and composite is being output
+          #hdmi_force_hotplug=1
+
+          # uncomment to force a specific HDMI mode (this will force VGA)
+          #hdmi_group=1
+          #hdmi_mode=1
+
+          # uncomment to force a HDMI mode rather than DVI. This can make audio work in
+          # DMT (computer monitor) modes
+          #hdmi_drive=2
+
+          # uncomment to increase signal to HDMI, if you have interference, blanking, or
+          # no display
+          #config_hdmi_boost=4
+
+          # uncomment for composite PAL
+          #sdtv_mode=2
+          
+          #uncomment to overclock the arm. 700 MHz is the default.
+          #arm_freq=800
+          
+          # Uncomment some or all of these to enable the optional hardware interfaces
+          #dtparam=i2c_arm=on
+          #dtparam=i2s=on
+          #dtparam=spi=on
+          
+          # Uncomment this to enable infrared communication.
+          #dtoverlay=gpio-ir,gpio_pin=17
+          #dtoverlay=gpio-ir-tx,gpio_pin=18
+          
+          # Additional overlays and parameters are documented /boot/overlays/README
+          
+          # Enable audio (loads snd_bcm2835)
+          dtparam=audio=on
+          
+          [pi4]
+          # Enable DRM VC4 V3D driver on top of the dispmanx display stack
+          dtoverlay=vc4-fkms-v3d
+          max_framebuffers=2
+
+          [all]
+          #dtoverlay=vc4-fkms-v3d
+          EOF
+
+          git clone --depth=1 -b master https://github.com/buildroot/buildroot
+          cd buildroot
+          wget -O .config https://github.com/chainsx/cxcore/raw/master/files/config
+          make
+          cd .. && mkdir initroot
+          cp buildroot/output/images/rootfs.tar initroot
+          rm -rf buildroot
+          cd initroot
+          gunzip rootfs.tar.gz
+          tar -xvf rootfs.tar && rm rootfs.tar
+
+          cat <<EOF >> etc/init.d/S99flash
+          #!/bin/sh
+          BLKDEV=/dev/mmcblk0
+          ROOTPART_SEQ=3
+          dialog --title INIT-SYSTEM --infobox "Initing System, Please Wait A Moment....." 20 60
+          parted -s $BLKDEV -- resizepart $ROOTPART_SEQ 100%
+          resize.f2fs $BLKDEV"p"$ROOTPART_SEQ
+          cd /boot
+          rm *.dtb >> /dev/null
+          rm BUILD-DATA >> /dev/null
+          rm -rf defaults >> /dev/null
+          rm -rf overlays >> /dev/null
+          rm recover* >> /dev/null
+          rm RECOVERY_FILES_DO_NOT_EDIT >> /dev/null
+          rm riscos-boot.bin >> /dev/null
+          mv EFI-BOOT/* . >> /dev/null
+          rmdir EFI-BOOT >> /dev/null
+          sync
+          sleep 5
+          reboot
+          EOF
+
+          chmod +x initroot/etc/init.d/S99flash
+          cat <<EOF >> etc/fstab
+          # <file system>	<mount pt>	<type>		<options>	<dump>	<pass>
+          /dev/root	/		squashfs	rw,noauto	0	1
+          /dev/mmcblk0p1	/boot		vfat		defaults	0	0
+          proc		/proc		proc		defaults	0	0
+          devpts		/dev/pts	devpts		defaults,gid=5,mode=620,ptmxmode=0666	0	0
+          tmpfs		/dev/shm	tmpfs		mode=0777	0	0
+          tmpfs		/tmp		tmpfs		mode=1777	0	0
+          tmpfs		/run		tmpfs		mode=0755,nosuid,nodev	0	0
+          sysfs		/sys		sysfs		defaults	0	0
+          EOF
+          cd ..
+
+          mksquashfs initroot recovery.rfs
+          rm -rf initroot
+          mkdir noobs
+          cd noobs
+          wget http://ftp.jaist.ac.jp/pub/raspberrypi/NOOBS_lite/images/NOOBS_lite-2020-02-07/NOOBS_lite_v3_3.zip
+          unzip NOOBS_lite_v3_3.zip
+          rm *txt
+          rm NOOBS_lite_v3_3.zip
+          rm recovery.rfs
+          cp ../recovery.rfs .
+          sed -ie '/init\=\/init/d' recovery.cmdline
+          cd ..
+
+          dd if=/dev/zero of=debian.img bs=1M count=1500 status=progress
+          parted debian.img mktable msdos
+          cat <<EOF | fdisk $IMGNAME
+          n
+          p
+          1
+          2048
+          526336
+          n
+          p
+          2
+          526337
+          657409
+          n
+          p
+          3
+          657410
+          3071999
+          w
+          EOF
+
+          sudo apt-get install kpartx
+          kpartx -av debian.img
+
+          mkfs.vfat -F 32 /dev/mapper/loop0p1
+          mkfs.ext4 -L KERNEL /dev/mapper/loop0p2
+          mkfs.f2fs -l ROOTFS /dev/mapper/loop0p3
+          kpartx -d debian.img
+
+          parted -s debian.img -- toggle 1 lba
+          parted -s debian.img -- toggle 1 boot
+
+          kpartx -av debian.img
+          mkdir boot
+          mount /dev/mapper/loop0p1 boot
+          mkdir boot/EFI-BOOT
+          mv root/boot/*dat boot/EFI-BOOT
+          mv root/boot/*elf boot/EFI-BOOT
+          mv root/boot/bootcode.bin boot/EFI-BOOT
+          mv root/boot/*dtb boot/EFI-BOOT
+          mv root/boot/overlays boot
+          wget https://github.com/chainsx/cxcore/raw/master/files/EFI-boot.tar.gz
+          tar -zxvf EFI-boot.tar.gz -C boot/EFI-BOOT
+          mv noobs/* boot
+          sync
+          umount boot
+          mkdir kernel
+          mount /dev/mapper/loop0p2 kernel
+          mv root/boot/kernel8.img kernel/vmlinuz
+          wget https://github.com/chainsx/cxcore/raw/master/files/EFI-root.tar.gz
+          tar -zxvf EFI-root.tar.gz -C kernel
+          sync
+          umount kernel
+          mkdir rootfs
+          mount /dev/mapper/loop0p3 rootfs
+          cp -rfp root/* rootfs
+          cp -rfp rootf/* rootfs
+          sync
+          umount rootfs
+          kpartx -d debian.img
+          mkdir 123
+          mv debian.img 123/
+      - name: Upload 
+        uses: actions/upload-artifact@master
+        with:
+          name: 123
+          path: 123
