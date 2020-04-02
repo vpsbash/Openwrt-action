@@ -11,8 +11,9 @@ jobs:
 
       - name: 1
         run: |
-          sudo apt-get install qemu-user-static
-          sudo apt install debootstrap debian-keyring
+          sudo apt update -y
+          sudo apt-get install qemu-user-static -y
+          sudo apt install debootstrap debian-keyring -y
           sudo debootstrap --foreign --no-check-gpg --arch=arm64 buster ./rootfs http://ftp.us.debian.org/debian
           sudo cp /usr/bin/qemu-aarch64-static ./rootfs/usr/bin
           LC_ALL=C LANGUAGE=C LANG=C chroot rootfs /debootstrap/debootstrap --second-stage
@@ -217,7 +218,7 @@ jobs:
           w
           EOF
 
-          sudo apt-get install kpartx
+          sudo apt-get install kpartx -y
           kpartx -av debian.img
 
           mkfs.vfat -F 32 /dev/mapper/loop0p1
