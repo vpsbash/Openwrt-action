@@ -19,7 +19,7 @@ jobs:
           sudo cp /usr/bin/qemu-aarch64-static ./rootfs/usr/bin
           LC_ALL=C LANGUAGE=C LANG=C chroot rootfs /debootstrap/debootstrap --second-stage
           LC_ALL=C LANGUAGE=C LANG=C chroot rootfs dpkg --configure -a
-          LC_ALL=C LANGUAGE=C LANG=C chroot rootfs apt-get install -y sudo ssh net-tools ethtool wireless-tools network-manager iputils-ping rsyslog alsa-utils bash-completion gnupg busybox kmod htop--no-install-recommends
+          LC_ALL=C LANGUAGE=C LANG=C chroot rootfs apt-get install -y sudo ssh net-tools ethtool wireless-tools network-manager iputils-ping rsyslog alsa-utils bash-completion gnupg busybox kmod --no-install-recommends
           cat <<EOF | chroot rootfs adduser pi && addgroup pi adm && addgroup pi sudo && addgroup pi audio
           raspberry
           raspberry
