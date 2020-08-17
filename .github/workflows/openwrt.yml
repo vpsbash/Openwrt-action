@@ -72,7 +72,7 @@ jobs:
           cp -r openwrt-package/lienol openwrt/package/
           cp -r lede/tools/upx openwrt/tools/
           cp -r lede/tools/ucl openwrt/tools/
-          cp -r OpenClash/luci-app-openclash  openwrt/package/
+          #cp -r OpenClash/luci-app-openclash  openwrt/package/
           git clone https://github.com/jerrykuku/lua-maxminddb.git package/lean/lua-maxminddb
           git clone https://github.com/jerrykuku/luci-app-vssr.git package/lean/luci-app-vssr
           rm -rf openwrt/package/lean/luci-theme-argon
