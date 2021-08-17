@@ -41,7 +41,7 @@ jobs:
       - name: Clone source code
         run: |
           git clone https://github.com/coolsnowwolf/lede
-          mv lede openwrtmv lede openwrt
+          mv lede openwrt
           cd openwrt
           mkdir package/luci-app-openclash
           git clone --depth=1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
