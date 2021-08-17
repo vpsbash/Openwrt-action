@@ -1,0 +1,41 @@
+sudo apt-get update
+sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync
+
+mkdir package/luci-app-openclash
+git clone --depth=1 https://github.com/vernesong/OpenClash.git package/luci-app-openclash
+rm -rf package/lean/luci-theme-argon/
+git clone https://github.com/jerrykuku/luci-theme-argon.git  package/lean/luci-theme-argon
+ ./scripts/feeds update -a
+ ./scripts/feeds install -a
+make defconfig
+./scripts/diffconfig.sh > seed.config
+
+cat seed.config 
+CONFIG_TARGET_x86=y
+CONFIG_TARGET_x86_64=y
+CONFIG_TARGET_x86_64_DEVICE_generic=y
+CONFIG_PACKAGE_bash=y
+CONFIG_PACKAGE_ca-certificates=y
+CONFIG_PACKAGE_coreutils-nohup=y
+CONFIG_PACKAGE_iptables-mod-extra=y
+CONFIG_PACKAGE_kmod-ipt-extra=y
+CONFIG_PACKAGE_libcap=y
+CONFIG_PACKAGE_libcap-bin=y
+CONFIG_PACKAGE_libcap-bin-capsh-shell="/bin/sh"
+CONFIG_PACKAGE_libdb47=y
+CONFIG_PACKAGE_libruby=y
+CONFIG_PACKAGE_libyaml=y
+CONFIG_PACKAGE_luci-app-openclash=y
+CONFIG_PACKAGE_luci-theme-argon=y
+CONFIG_PACKAGE_ruby=y
+CONFIG_PACKAGE_ruby-bigdecimal=y
+CONFIG_PACKAGE_ruby-date=y
+CONFIG_PACKAGE_ruby-dbm=y
+CONFIG_PACKAGE_ruby-digest=y
+CONFIG_PACKAGE_ruby-enc=y
+CONFIG_PACKAGE_ruby-forwardable=y
+CONFIG_PACKAGE_ruby-pstore=y
+CONFIG_PACKAGE_ruby-psych=y
+CONFIG_PACKAGE_ruby-stringio=y
+CONFIG_PACKAGE_ruby-strscan=y
+CONFIG_PACKAGE_ruby-yaml=y
