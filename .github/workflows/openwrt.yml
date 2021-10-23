@@ -94,7 +94,7 @@ jobs:
         run: |
           sudo -E apt-get -y install qemu-utils
           cd openwrt/bin/targets/x86/64/
-          qemu-img convert -f raw -O vhdx -o subformat=dynamic openwrt-x86-64-generic-squashfs-rootfs.img openwrt-x86-64-generic-squashfs-rootfs.vhdx
+          #qemu-img convert -f raw -O vhdx -o subformat=dynamic openwrt-x86-64-generic-squashfs-rootfs.img openwrt-x86-64-generic-squashfs-rootfs.vhdx
           qemu-img convert -f raw -O vhdx -o subformat=dynamic openwrt-x86-64-generic-squashfs-combined-efi.img openwrt-x86-64-generic-squashfs-combined-efi.vhdx
       - name: Upload artifact
         uses: actions/upload-artifact@master
