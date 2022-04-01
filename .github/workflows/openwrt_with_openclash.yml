@@ -46,6 +46,13 @@ jobs:
         run: |
           cd openwrt
           echo "src-git openclash https://github.com/vernesong/OpenClash.git" >> feeds.conf.default 
+          sed -i 's/DEFAULT_PACKAGES.basic:=/DEFAULT_PACKAGES.basic:= base-files dropbear fstools libc libgcc libustream-openssl logd mtd netifd opkg uci uclient-fetch urandom-seed/' include/target.mk
+          sed -i 's/dnsmasq/dnsmasq-full/' include/target.mk
+          sed -i 's/odhcp6c/#odhcp6c/' include/target.mk
+          sed -i 's/odhcpd-ipv6only/#odhcpd-ipv6only/' include/target.mk
+          sed -i 's/ppp-mod-pppoe/ppp-mod-pppoe luci coreutils-nohup bash curl ca-certificates ipset ip-full iptables-mod-tproxy iptables-mod-extra libcap libcap-bin ruby ruby-yaml kmod-tun/' include/target.mk
+          sed -i 's/16384/65536/' package/kernel/linux/files/sysctl-nf-conntrack.conf
+
       
       - name: Update feeds
         run: |
@@ -74,7 +81,7 @@ jobs:
       - name: Compile firmware
         run: |
           cd openwrt/
-          make -j$(nproc) || make -j1 V=s
+          make -j$(($(nproc) + 1)) || make -j1 V=s
           echo "======================="
           echo "Space usage:"
           echo "======================="
