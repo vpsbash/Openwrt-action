@@ -46,7 +46,7 @@ jobs:
         run: |
           cd lede
           echo "src-git helloworld https://github.com/fw876/helloworld.git" >> "feeds.conf.default"
-          sed -i 's/KERNEL_PATCHVER:=5.15/KERNEL_PATCHVER:=5.4/' include/kernel-version.mk
+          sed -i 's/KERNEL_PATCHVER:=5.15/KERNEL_PATCHVER:=5.4/' target/linux/x86/Makefile
 
       - name: Update feeds
         run: |
