@@ -1,4 +1,4 @@
-name: OpenWrt-coolsnowwolf-CI
+name: OpenWrt-coolsnowwolf5.4-CI
 
 on: 
   release:
