@@ -45,6 +45,7 @@ jobs:
       - name: Load basic configuration
         run: |
           cd lede
+          echo "src-git helloworld https://github.com/fw876/helloworld.git" >> "feeds.conf.default"
 
       - name: Update feeds
         run: |
