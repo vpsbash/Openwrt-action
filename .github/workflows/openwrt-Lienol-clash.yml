@@ -39,13 +39,13 @@ jobs:
 
       - name: Clone source code
         run: |
-          echo "src-git openclash https://github.com/vernesong/OpenClash.git" >> feeds.conf.default
+          git clone -b 21.02 --single-branch https://github.com/Lienol/openwrt openwrt
           cd openwrt
 
       - name: Load basic configuration
         run: |
           cd openwrt
-          git clone -b luci https://github.com/xiaorouji/openwrt-passwall.git package/luci-app-passwall
+          echo "src-git openclash https://github.com/vernesong/OpenClash.git" >> feeds.conf.default
 
       - name: Update feeds
         run: |
